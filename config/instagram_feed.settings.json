@@ -1,0 +1,16 @@
+{
+    "_config_name": "instagram_feed.settings",
+    "feed": "",
+    "username": "",
+    "tag": "",
+    "container": "",
+    "display_profile": 1,
+    "display_biography": 1,
+    "display_gallery": 1,
+    "image_size": "640",
+    "display_igtv": 0,
+    "styling": 1,
+    "items": "8",
+    "items_per_row": "4",
+    "margin": "0.5"
+}

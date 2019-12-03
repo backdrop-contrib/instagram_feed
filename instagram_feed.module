@@ -1,0 +1,213 @@
+<?php
+/**
+ * @file
+ * Display the Instagram feed of any @user or #tag on your site.
+ */
+
+/**
+ * Implements hook_config_info().
+ */
+function instagram_feed_config_info() {
+  return array(
+    'instagram_feed.settings' => array(
+      'label' => t('Instagram Feed settings'),
+      'group' => t('Configuration'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_init().
+ */
+function instagram_feed_init() {
+  $config = config('instagram_feed.settings');
+
+  if (!empty($config->get('feed'))) {
+    // Add JS.
+    backdrop_add_js(backdrop_get_path('module', 'instagram_feed') . '/js/jquery.instagramFeed.min.js');
+    backdrop_add_js(backdrop_get_path('module', 'instagram_feed') . '/js/instagram_feed.js');
+
+    // Add settings.
+    $settings = array(
+      'instagramFeed' => array(
+        'feed' => $config->get('feed'),
+        'username' => $config->get('username'),
+        'tag' => $config->get('tag'),
+        'container' => $config->get('container'),
+        'display_profile' => $config->get('display_profile'),
+        'display_biography' => $config->get('display_biography'),
+        'display_gallery' => $config->get('display_gallery'),
+        'image_size' => (int) $config->get('image_size'),
+        'display_igtv' => $config->get('display_igtv'),
+        'styling' => $config->get('styling'),
+        'items' => (int) $config->get('items'),
+        'items_per_row' => (int) $config->get('items_per_row'),
+        'margin' => (float) $config->get('margin'),
+      ),
+    );
+    backdrop_add_js($settings, 'setting');
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function instagram_feed_menu() {
+  return array(
+    'admin/config/services/instagram-feed' => array(
+      'title' => 'Instagram feed',
+      'description' => 'Configure the Instagram feed.',
+      'page callback' => 'backdrop_get_form',
+      'page arguments' => array('instagram_feed_config_form'),
+      'access arguments' => array('administer site configuration'),
+    ),
+  );
+}
+
+/**
+ * Configuration form.
+ */
+function instagram_feed_config_form($form, &$form_state) {
+  $config = config('instagram_feed.settings');
+  $form['#config'] = 'instagram_feed.settings';
+
+  $form['feed'] = array(
+    '#type' => 'select',
+    '#title' => t('Feed type'),
+    '#description' => t("The type of Instagram feed to display."),
+    '#default_value' => $config->get('feed'),
+    '#options' => array(
+      'user' => t('User'),
+      'tag' => t('Tag'),
+    ),
+    '#empty_option' => '- ' . t('Disabled') . ' -',
+    '#required' => TRUE,
+  );
+  $form['username'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Username'),
+    '#description' => t("The username of the Instagram account to display the feed for."),
+    '#default_value' => $config->get('username'),
+    '#field_prefix' => '@',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="feed"]' => array('value' => 'user'),
+      ),
+      'required' => array(
+        ':input[name="feed"]' => array('value' => 'user'),
+      ),
+    ),
+  );
+  $form['tag'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Tag'),
+    '#description' => t("The Instagram tag to display the feed for."),
+    '#default_value' => $config->get('tag'),
+    '#field_prefix' => '#',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="feed"]' => array('value' => 'tag'),
+      ),
+      'required' => array(
+        ':input[name="feed"]' => array('value' => 'tag'),
+      ),
+    ),
+  );
+  $form['container'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Selector'),
+    '#description' => t("The jQuery selector of the element where the feed will be displayed. Any content/markup within the element will be removed."),
+    '#default_value' => $config->get('container'),
+    '#states' => array(
+      'required' => array(
+        ':input[name="feed"]' => array('!value' => ''),
+      ),
+    ),
+  );
+  $form['display_profile'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display profile'),
+    '#description' => t("Show the user's/tag's image and name."),
+    '#default_value' => $config->get('display_profile'),
+  );
+  $form['display_biography'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display biography'),
+    '#description' => t("Show the user's bio."),
+    '#default_value' => $config->get('display_biography'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="feed"]' => array('value' => 'user'),
+        ':input[name="display_profile"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+  $form['display_gallery'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display gallery'),
+    '#description' => t("Show thumbnails of the latest images/videos."),
+    '#default_value' => $config->get('display_gallery'),
+  );
+  $form['image_size'] = array(
+    '#type' => 'select',
+    '#title' => t('Image size'),
+    '#description' => t("Images may be stretched larger than this size depending on the value of the 'Items' options below. Chosen size does not affect video thumbnails."),
+    '#default_value' => $config->get('image_size'),
+    '#options' => backdrop_map_assoc(array(
+      '150',
+      '240',
+      '320',
+      '480',
+      '640',
+    )),
+    '#field_suffix' => 'px',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="display_gallery"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+  $form['display_igtv'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display IGTV'),
+    '#description' => t("Show thumbnails of the latest IGTV videos."),
+    '#default_value' => $config->get('display_igtv'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="feed"]' => array('value' => 'user'),
+      ),
+    ),
+  );
+  $form['styling'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use default styling'),
+    '#description' => t("Disable to use your own styling."),
+    '#default_value' => $config->get('styling'),
+  );
+  $form['items'] = array(
+    '#type' => 'number',
+    '#title' => t('Items'),
+    '#description' => t("The number of items to display in the gallery. User feeds have a limit of 12 items."),
+    '#default_value' => $config->get('items'),
+    '#min' => 1,
+  );
+  $form['items_per_row'] = array(
+    '#type' => 'number',
+    '#title' => t('Items per row'),
+    '#description' => t("The number of items to display in each row in the gallery."),
+    '#default_value' => $config->get('items_per_row'),
+    '#min' => 1,
+  );
+  $form['margin'] = array(
+    '#type' => 'number',
+    '#title' => t('Margin'),
+    '#description' => t("The gap between items in the gallery."),
+    '#default_value' => $config->get('margin'),
+    '#min' => 0,
+    '#max' => 100,
+    '#step' => 0.01,
+    '#field_suffix' => '%',
+  );
+
+  return system_settings_form($form);
+}
