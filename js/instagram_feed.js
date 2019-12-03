@@ -25,7 +25,6 @@
       else {
         options.tag = Backdrop.settings.instagramFeed.tag;
       }
-      console.log(options);
       $.instagramFeed(options);
 
     }
