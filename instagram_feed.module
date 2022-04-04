@@ -116,7 +116,7 @@ function instagram_feed_config_form($form, &$form_state) {
   $form['container'] = array(
     '#type' => 'textfield',
     '#title' => t('Selector'),
-    '#description' => t("The jQuery selector of the element where the feed will be displayed. Any content/markup within the element will be removed."),
+    '#description' => t("The jQuery selector of the element where the feed will be displayed (e.g. <code>div.insta-block</code>). Any content/markup within the element will be removed."),
     '#default_value' => $config->get('container'),
     '#states' => array(
       'required' => array(
